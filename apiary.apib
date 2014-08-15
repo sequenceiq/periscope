@@ -209,7 +209,6 @@ TBD - add the 3 different scenarios - success, partial and failure
 + Request (application/json)
 
         {
-
             "jarUrl": "https://dl.dropboxusercontent.com/u/13919958/lostnodes.jar",
             "scaleUpRules":
             {
@@ -268,8 +267,7 @@ TBD - add the 3 different scenarios - success, partial and failure
                     "limit": "4"
                 }
             },
-            "jarUrl": "https://dl.dropboxusercontent.com/u/13919958/lostnodes.jar",
-            "message": "Policy successfully added"
+            "jarUrl": "https://dl.dropboxusercontent.com/u/13919958/lostnodes.jar"
         }
 
 
@@ -281,6 +279,9 @@ TBD - add the 3 different scenarios - success, partial and failure
     + clusterId (required String `clusterIUD`) ... The id of the cluster to attach the policy.
 
 + Request (application/json)
+        {
+
+        }
 
 + Response 200 (application/json)
 
@@ -311,8 +312,7 @@ TBD - add the 3 different scenarios - success, partial and failure
                     "limit": "4"
                 }
             },
-            "jarUrl": "https://dl.dropboxusercontent.com/u/13919958/lostnodes.jar",
-            "message": ""
+            "jarUrl": "https://dl.dropboxusercontent.com/u/13919958/lostnodes.jar"
         }
 
 #Group Applications
@@ -327,7 +327,7 @@ Applications related resources of the **Periscope API**.
 + Request (application/json)
 
         {
-          "state": "SUSPENDED"
+
         }
 
 + Response 200 (application/json)
@@ -361,7 +361,7 @@ Configuration related resources of the **Periscope API**.
 + Request (application/json)
 
         {
-          "state": "SUSPENDED"
+
         }
 
 + Response 200 (application/json)
