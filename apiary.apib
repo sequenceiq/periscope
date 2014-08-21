@@ -372,12 +372,14 @@ In an SLA scaling policy the triggered rules are applied in order.
               "name": "downScaleWhenHighResource",
               "adjustmentType": "NODE_COUNT",
               "scalingAdjustment": -2,
+              "hostGroup": "slave_1",
               "alarmId": "51"
             },
             {
               "name": "upScaleWhenHighPendingContainers",
               "adjustmentType": "PERCENTAGE",
               "scalingAdjustment": 40,
+              "hostGroup": "slave_1",
               "alarmId": "50"
             }
           ]
@@ -391,6 +393,7 @@ In an SLA scaling policy the triggered rules are applied in order.
             {
               "alarmId": 50,
               "scalingAdjustment": 40,
+              "hostGroup": "slave_1",
               "adjustmentType": "PERCENTAGE",
               "name": "upScaleWhenHighPendingContainers",
               "id": 101
@@ -398,6 +401,7 @@ In an SLA scaling policy the triggered rules are applied in order.
             {
               "alarmId": 51,
               "scalingAdjustment": -2,
+              "hostGroup": "slave_1",
               "adjustmentType": "NODE_COUNT",
               "name": "downScaleWhenHighResource",
               "id": 100
@@ -426,6 +430,7 @@ In an SLA scaling policy the triggered rules are applied in order.
             {
               "alarmId": 50,
               "scalingAdjustment": 40,
+              "hostGroup": "slave_1",
               "adjustmentType": "PERCENTAGE",
               "name": "upScaleWhenHighPendingContainers",
               "id": 101
@@ -433,6 +438,7 @@ In an SLA scaling policy the triggered rules are applied in order.
             {
               "alarmId": 51,
               "scalingAdjustment": -2,
+              "hostGroup": "slave_1",
               "adjustmentType": "NODE_COUNT",
               "name": "downScaleWhenHighResource",
               "id": 100
@@ -463,6 +469,7 @@ In an SLA scaling policy the triggered rules are applied in order.
             {
               "alarmId": 50,
               "scalingAdjustment": 40,
+              "hostGroup": "slave_1",
               "adjustmentType": "PERCENTAGE",
               "name": "upScaleWhenHighPendingContainers",
               "id": 101
