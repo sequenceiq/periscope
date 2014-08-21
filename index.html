@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="./img/favicon.ico">
+
+        <title>Periscope</title>
+        <link href="./css/sequenceiq.doc.min.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <!-- Main title -->
+            <a class="navbar-brand" href=".">Periscope</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            <!-- Main navigation -->
+            <ul class="nav navbar-nav">
+            
+            </ul>
+
+            <!-- Search, Navigation and Repo links -->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li class="disabled">
+                    <a rel="next" >
+                        <i class="fa fa-arrow-left"></i> Previous
+                    </a>
+                </li>
+                <li class="disabled">
+                    <a rel="prev" >
+                        Next <i class="fa fa-arrow-right"></i>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#periscope">Periscope</a></li>
+        
+            <li><a href="#overview">Overview</a></li>
+        
+            <li><a href="#how-it-works">How it works</a></li>
+        
+            <li><a href="#building-blocks">Building blocks</a></li>
+        
+            <li><a href="#quickstart-and-installation">QuickStart and installation</a></li>
+        
+            <li><a href="#releases-future-plans">Releases, future plans</a></li>
+        
+            <li><a href="#contribution">Contribution</a></li>
+        
+    
+    </ul>
+</div></div>
+            <div class="col-md-9" role="main">
+
+<h1 id="periscope">Periscope</h1>
+<p><em>Periscope is a powerful, fast, thick and top-to-bottom right-hander, eastward from Sumbawa's famous west-coast. Timing is critical, as needs a number of elements to align before it shows its true colors.</em></p>
+<p><em>Periscope is a heuristic Hadoop scheduler you associate with a QoS profile. Built on YARN schedulers, cloud and VM resource management API's it allows you to associate SLAs to applications and customers.</em></p>
+<h2 id="overview">Overview</h2>
+<p>The purpose of Periscope is to bring QoS to a multi-tenant Hadoop cluster, while allowing to apply SLA policies to individual applications.
+At <a href="http://sequenceiq.com">SequenceIQ</a> working with multi-tenant Hadoop clusters for quite a while we have always seen the same frustration and fight for resource between users.
+The <strong>FairScheduler</strong> was partially solving this problem - bringing in fairness based on the notion of <a href="http://static.usenix.org/event/nsdi11/tech/full_papers/Ghodsi.pdf">Dominant Resource Fairness</a>.
+With the emergence of Hadoop 2 YARN and the <strong>CapacityScheduler</strong> we had the option to maximize throughput and utilization for a multi-tenant cluster in an operator-friendly manner.
+The scheduler works around the concept of queues. These queues are typically setup by administrators to reflect the economics of the shared cluster.
+While this is a pretty good abstraction and brings some level of SLA for predictable workloads, it often needs proper design ahead.
+The queue hierarchy and resource allocation needs to be changed when new tenants and workloads are moved to the cluster.</p>
+<p>Periscope was designed around the idea of <code>autoscaling</code> clusters - without any need to preconfigure queues, cluster nodes or apply capacity planning ahead.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>Periscope monitors the application progress, the number of YARN containers/resources and their allocation, queue depths, and the number of available cluster nodes and their health. 
+Since we have switched to YARN a while ago (been among the first adopters) we have run an open source <a href="https://github.com/sequenceiq/yarn-monitoring">monitoring project</a>, based on R.
+We have been collecting metrics from the YARN Timeline server, Hadoop Metrics2 and Ambari's Nagios/Ganglia - and profiling the applications and correlating with these metrics.
+One of the key findings was that while low level metrics are good to understand the cluster health - they might not necessarily help on making decisions when applying different SLA policies on a multi-tenant cluster. 
+Focusing on higher level building blocks as queue depth, YARN containers, etc actually brings in the same quality of service, while not being lost in low level details.</p>
+<p>Periscope works with two types of Hadoop clusters: <code>static</code> and <code>dynamic</code>. Periscope does not require any pre-installation - the only thing it requires is to be <code>attached</code> to an Ambari server's REST API.</p>
+<h2 id="building-blocks">Building blocks</h2>
+<h3 id="clusters">Clusters</h3>
+<p>A Hadoop cluster is a set of components and services launched in order to store, analyze and process unstructured data. Periscope can work with any Hadoop 2/ YARN cluster provisioned with Apache Ambari, and supports any YARN application.
+As highlighted before, Periscope can apply SLA policies to <code>static</code> and <code>autoscaling</code> clusters. Due to flexibility supported by cloud based Hadoop deployments, we suggest to link Periscope with <a href="http://sequenceiq.com/cloudbreak/">Cloudbreak</a> and apply policy based <code>autoscaling</code> to your cluster.</p>
+<p><strong>Static clusters</strong>
+From Periscope point of view we consider a cluster <code>static</code> when the cluster capacity can't be increased horizontally.
+This means that the hardware resources are already given - and the throughput can't be increased by adding new nodes.
+Periscope introspects the job submission process, monitors the applications and applies the following SLAs:</p>
+<ol>
+<li>Application ordering - can guaranty that a higher priority application finishes before another one (supporting parallel or sequential execution)</li>
+<li>Moves running applications between priority queues</li>
+<li><em>Attempts</em> to enforce time based SLA (execution time, finish by, finish between, recurring)</li>
+<li><em>Attempts</em> to enforce guaranteed cluster capacity requests ( x % of the resources)</li>
+<li>Support for distributed (but not YARN ready) applications using Apache Slider</li>
+<li>Attach priorities to SLAs</li>
+</ol>
+<p><em>Note: not all of the features above are supported in the first <code>public beta</code> version. There are dependencies we contributed to Hadoop, Ambari and YARN and they will be included in the next releases (1.7 and 2.6)</em></p>
+<p><strong>Autoscaling clusters</strong>
+From Periscope point of view we consider a cluster <code>dynamic</code> when the cluster capacity can be increased horizontally.
+This means that nodes can be added or removed on the fly - thus the cluster’s throughput can be increased or decreased based on the cluster load and scheduled applications.
+Periscope works with <a href="http://sequenceiq.com/cloudbreak/">Cloudbreak</a> to add or remove nodes from the cluster based on the SLA policies and thus continuously provide a high <em>quality of service</em> for the multi-tenand Hadoop cluster.
+Just to refresh memories - <a href="http://sequenceiq.com/products.html">Cloudbreak</a> is <a href="http://sequenceiq.com">SequenceIQ's</a> open source, cloud agnostic Hadoop as a Service API.
+Given the option of provisioning or decommissioning cluster nodes on the fly, Periscope allows you to use the following set of SLAs:</p>
+<ol>
+<li>Application ordering - can guaranty that a higher priority application finishes before another one (supporting parallel or sequential execution)</li>
+<li>Moves running applications between priority queues</li>
+<li><em>Enforce</em> time based SLA (execution time, finish by, finish between, recurring) by increasing cluster capacity and throughput</li>
+<li>Smart decommissioning - avoids HDFS storms, keeps <code>payed</code> nodes alive till the last minute</li>
+<li><em>Enforce</em> guaranteed cluster capacity requests ( x % of the resources)</li>
+<li><em>Private</em> cluster requests - supports provisioning of short lived private clusters with the possibility to merge</li>
+<li>Support for distributed (but not YARN ready) applications using Apache Slider</li>
+<li>Attach priorities to SLAs
+<em>Note: not all of the features above are supported in the first <code>public beta</code> version. There are dependencies we contributed to Hadoop, Ambari and YARN and they will be included in the next releases (1.7 and 2.6)</em></li>
+</ol>
+<h3 id="alarms">Alarms</h3>
+<p>An alarm watches a <code>metric</code> over a specified time period, and used by one or more action or scaling policy based on the value of the metric relative to a given threshold over a number of time periods. In case Periscope raises an alarm an action (e.g. sending an email) or a scaling policy is triggered. Alarms are based on metrics. The current supported <code>metrics</code> are: 
+*<code>PENDING_CONTAINERS</code>- pending YARN containers</p>
+<p>*<code>PENDING_APPLICATIONS</code> - pending/queued YARN applications</p>
+<p>*<code>LOST_NODES</code> - cluster nodes lost</p>
+<p>*<code>UNHEALTHY_NODES</code> - unhealthy cluster nodes</p>
+<p>*<code>GLOBAL_RESOURCES</code> - global resources </p>
+<p>Measured <code>metrics</code> are compared with pre-configured values using operators. The <code>comparison operators</code> are: <code>LESS_THAN</code>, <code>GREATER_THAN</code>, <code>LESS_OR_EQUAL_THAN</code>, <code>GREATER_OR_EQUAL_THAN</code>, <code>EQUALS</code>.
+In order to avoid reacting for sudden spikes in the system and apply policies only in case of a sustained system stress, <code>alarms</code> have to be sustained over a <code>period</code> of time.  The <code>period</code> specifies the time period in minutes during the alarm has to be sustained. </p>
+<p>Also a <code>threshold</code> can be configured, which specifies the variance applied by the operator for the selected <code>metric</code>.</p>
+<h3 id="sla-scaling-policies">SLA Scaling Policies</h3>
+<p>Scaling is the ability to increase or decrease the capacity of the Hadoop cluster or application. 
+When scaling policies are used, the capacity is automatically increased or decreased according to the conditions defined.
+Periscope will do the heavy lifting and based on the alarms and the scaling policy linked to them it executes the associated policy.
+By default a fully configured and running <a href="https://cloudbreak.sequenceiq.com/">Cloudbreak</a> cluster contains no SLA policies. 
+An SLA scaling policy can contain multiple alarms. While part of the scaling policies <code>scalingAdjustment</code> are applied, also to keep the cluster size within boundaries, a <code>minSize</code> and <code>maxSize</code> is attached to the cluster - thus a scaling policy - though trough an alarm is triggered - can never over or undersize a cluster.
+In an SLA scaling policy the triggered rules are applied in order.</p>
+<h3 id="applications">Applications</h3>
+<p>A Hadoop YARN application is a packaged workload submitted to a cluster. An application requests resources from YARN Resource Manager. The resources are allocated as YARN containers. By default Periscope works with the Hadoop YARN Capacity Scheduler. Using the Capacity Scheduler applications are submitted in different priority queues. The queue configurations, their depth, associated resources, etc have to be designed ahead - and adapted in case of new tenants, applications or workloads are using the cluster.
+At SequenceIQ, through our contributions to Apache YARN we facilitate moving applications between queues - and thus use the SLA policies attached to these queues. Even more, those SLA policies which were previously attached to Capacity Scheduler queues now can be attached to submitted jobs/applications. 
+Also we facilitate changing the resources allocated to a running application - even though they were submitted and already running. 
+<em>Note: not all of the features above are supported in the first <code>public beta</code> version. There are dependencies we contributed to Hadoop, Ambari and YARN and they will be included in the next releases (1.7 and 2.6)</em></p>
+<h3 id="configuration">Configuration</h3>
+<p>Periscope brings in the capability to reconfigure a running cluster - in particular resource properties heavily used. These properties currently are mostly related to the Capacity Scheduler configurations, but as we add functionality to Periscope this set of properties will constantly increase.</p>
+<h2 id="quickstart-and-installation">QuickStart and installation</h2>
+<h2 id="releases-future-plans">Releases, future plans</h2>
+<h2 id="contribution">Contribution</h2>
+<p>So you are about to contribute to Periscope? Awesome! There are many different ways in which you can contribute. We strongly value your feedback, questions, bug reports, and feature requests.
+Periscope consist of the following main projects:</p>
+<h3 id="periscope-api">Periscope API</h3>
+<p>Available: <a href=https://periscope-api.sequenceiq.com>https://periscope-api.sequenceiq.com</a></p>
+<p>GitHub: <a href=https://github.com/sequenceiq/periscope>https://github.com/sequenceiq/periscope</a></p>
+<h3 id="periscope-documentation">Periscope documentation</h3>
+<p>Product documentation: <a href=http://sequenceiq.com/periscope>http://sequenceiq.com/periscope</a></p>
+<p>GitHub: <a href=https://github.com/sequenceiq/periscope/blob/master/docs/index.md>https://github.com/sequenceiq/periscope/blob/master/docs/index.md</a></p>
+<p>API documentation: <a href=http://docs.periscope.apiary.io>http://docs.periscope.apiary.io</a></p>
+<p>GitHub: <a href=https://github.com/sequenceiq/periscope/blob/master/apiary.apib>https://github.com/sequenceiq/periscope/blob/master/apiary.apib</a></p>
+<h3 id="ways-to-contribute">Ways to contribute</h3>
+<ul>
+<li>Use Periscope and Cloudbreak</li>
+<li>Submit a GitHub issue to the appropriate GitHub repository.</li>
+<li>Submit a new feature request (as a GitHub issue).</li>
+<li>Submit a code fix for a bug.</li>
+<li>Submit a unit test.</li>
+<li>Code review pending pull requests and bug fixes.</li>
+<li>Tell others about these projects.</li>
+</ul>
+<h3 id="contributing-code">Contributing code</h3>
+<p>We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
+The Periscope projects are open source and developed/distributed under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache Software License, Version 2.0</a>.
+If you wish to contribute to Periscope (which you're very welcome and encouraged to do so) then you must agree to release the rights of your source under this license.</p>
+<h4 id="creating-issues">Creating issues</h4>
+<p>Any significant improvement should be documented as a GitHub issue before starting to work on it. Please use the appropriate labels - bug, enhancement, etc - this helps while creating the release notes for a version release.
+Before submitting issues please check for duplicate or similar issues. If you are unclear about an issue please feel free to <a href="https://groups.google.com/forum/#!forum/periscope">contact us</a>.</p>
+<h4 id="discuss-your-design">Discuss your design</h4>
+<p>We recommend discussing your plans on the <a href="https://groups.google.com/forum/#!forum/periscope">mailing list</a> before starting to code - especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give feedback on your design, and maybe point out if someone else is working on the same thing.</p>
+<h4 id="conventions">Conventions</h4>
+<p>Please write clean code. Universally formatted code promotes ease of writing, reading, and maintenance.
+* Do not use @author tags.</p>
+<ul>
+<li>
+<p>New classes must match our dependency mechanism.</p>
+</li>
+<li>
+<p>Code must be formatted according to our <a href="https://github.com/sequenceiq/periscope/blob/master/config/eclipse_formatter.xml">formatter</a>.</p>
+</li>
+<li>
+<p>Code must be checked with our <a href="https://github.com/sequenceiq/periscope/tree/master/config/checkstyle">checkstyle</a>.</p>
+</li>
+<li>
+<p>Contributions must pass existing unit tests.</p>
+</li>
+<li>
+<p>The code changes must be accompanied by unit tests. In cases where unit tests are not possible or don’t make sense an explanation should be provided.</p>
+</li>
+<li>
+<p>New unit tests should be provided to demonstrate bugs and fixes (use Mockito whenever possible).</p>
+</li>
+<li>
+<p>The tests should be named *Test.java.</p>
+</li>
+<li>
+<p>Use slf4j instead of commons logging as the logging facade.</p>
+</li>
+</ul>
+<h3 id="thank-you">Thank you</h3>
+<p>Huge thanks go to the contributors from the community who have been actively working with the SequenceIQ team. Kudos for that.</p>
+<h3 id="jobs">Jobs</h3>
+<p>Do you like what we are doing? We are looking for exceptional software engineers to join our development team. Would you like to work with others in the open source community?
+Please consider submitting your resume and applying for open positions at jobs@sequenceiq.com.</p>
+<h3 id="legal">Legal</h3>
+<p><em>Brought to you courtesy of our legal counsel.</em></p>
+<p>Use and transfer of Cloudbreak may be subject to certain restrictions by the
+United States and other governments.<br />
+It is your responsibility to ensure that your use and/or transfer does not
+violate applicable laws.</p>
+<h3 id="licensing">Licensing</h3>
+<p>Cloudbreak is licensed under the Apache License, Version 2.0. See <a href="http://www.apache.org/licenses/LICENSE-2.0.html">LICENSE</a> for full license text.</p>
+</div>
+        </div>
+
+        
+
+        <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+        <script src="./js/bootstrap-3.0.3.min.js"></script>
+        <script src="./js/prettify-1.0.min.js"></script>
+        <script src="./js/base.js"></script>
+    </body>
+</html>
