@@ -112,6 +112,9 @@ One of the key findings was that while low level metrics are good to understand 
 Focusing on higher level building blocks as queue depth, YARN containers, etc actually brings in the same quality of service, while not being lost in low level details.</p>
 <p>Periscope works with two types of Hadoop clusters: <code>static</code> and <code>dynamic</code>. Periscope does not require any pre-installation - the only thing it requires is to be <code>attached</code> to an Ambari server's REST API.</p>
 <h2 id="technology">Technology</h2>
+<h3 id="cloudbreak">Cloudbreak</h3>
+<p>Cloudbreak is SequenceIQ's RESTful Hadoop as a Service API. Once it is deployed in your favourite servlet container exposes a REST API allowing to span up Hadoop clusters of arbitrary sizes on your selected cloud provider. Provisioning Hadoop has never been easier. Cloudbreak is built on the foundation of cloud providers API (Amazon AWS, Microsoft Azure, Google Cloud Compute...), Apache Ambari, Docker containers, Serf and dnsmasq.</p>
+<p>For further information please check the <a href="http://sequenceiq.com/cloudbreak">Cloudbreak documentation</a>.</p>
 <h3 id="apache-yarn">Apache YARN</h3>
 <p>Since the emergence of Hadoop 2 and the YARN based architecture we have a platform where we can run multiple applications (of different types) not constrained only to MapReduce.</p>
 <p>The idea of YARN is to have a global ResourceManager (RM) and per-application ApplicationMaster (AM). The ResourceManager and per-node slave, the NodeManager (NM), form the data-computation framework. The ResourceManager is the ultimate authority that arbitrates resources among all the applications in the system. The per-application ApplicationMaster is, in effect, a framework specific library and is tasked with negotiating resources from the ResourceManager and working with the NodeManager(s) to execute and monitor the tasks.</p>
@@ -144,9 +147,39 @@ Focusing on higher level building blocks as queue depth, YARN containers, etc ac
 <p>Ambari enables to integrate Hadoop provisioning, management and monitoring capabilities into applications with the Ambari REST APIs.
 Ambari Blueprints are a declarative definition of a cluster. With a Blueprint, you can specify a Stack, the Component layout and the Configurations to materialise a Hadoop cluster instance (via a REST API) without having to use the Ambari Cluster Install Wizard.</p>
 <p><img alt="" src="https://raw.githubusercontent.com/sequenceiq/periscope/master/docs/images/ambari-create-cluster.png" /></p>
-<h3 id="cloudbreak">Cloudbreak</h3>
-<p>Cloudbreak is SequenceIQ's RESTful Hadoop as a Service API. Once it is deployed in your favourite servlet container exposes a REST API allowing to span up Hadoop clusters of arbitrary sizes on your selected cloud provider. Provisioning Hadoop has never been easier. Cloudbreak is built on the foundation of cloud providers API (Amazon AWS, Microsoft Azure, Google Cloud Compute...), Apache Ambari, Docker containers, Serf and dnsmasq.</p>
-<p>For further information please check the <a href="http://sequenceiq.com/cloudbreak">Cloudbreak documentation</a>.</p>
+<h3 id="docker">Docker</h3>
+<p>Docker is an open platform for developers and sysadmins to build, ship, and run distributed applications. Consisting of Docker Engine, a portable, lightweight runtime and packaging tool, and Docker Hub, a cloud service for sharing applications and automating workflows, Docker enables apps to be quickly assembled from components and eliminates the friction between development, QA, and production environments. As a result, IT can ship faster and run the same app, unchanged, on laptops, data center VMs, and any cloud.</p>
+<p>The main features of Docker are:</p>
+<ol>
+<li>Lightweight, portable</li>
+<li>Build once, run anywhere</li>
+<li>VM - without the overhead of a VM</li>
+<li>Each virtualised application includes not only the application and the necessary binaries and libraries, but also an entire guest operating system</li>
+<li>
+<p>The Docker Engine container comprises just the application and its dependencies. It runs as an isolated process in userspace on the host operating system, sharing the kernel with other containers.
+    <img alt="" src="https://raw.githubusercontent.com/sequenceiq/cloudbreak/master/docs/images/vm.png" /></p>
+</li>
+<li>
+<p>Containers are isolated</p>
+</li>
+<li>It can be automated and scripted</li>
+</ol>
+<h3 id="serf">Serf</h3>
+<p>Serf is a tool for cluster membership, failure detection, and orchestration that is decentralised, fault-tolerant and highly available. Serf runs on every major platform: Linux, Mac OS X, and Windows. It is extremely lightweight.
+Serf uses an efficient gossip protocol to solve three major problems:</p>
+<ul>
+<li>
+<p>Membership: Serf maintains cluster membership lists and is able to execute custom handler scripts when that membership changes. For example, Serf can maintain the list of Hadoop servers of a cluster and notify the members when nodes come online or go offline.</p>
+</li>
+<li>
+<p>Failure detection and recovery: Serf automatically detects failed nodes within seconds, notifies the rest of the cluster, and executes handler scripts allowing you to handle these events. Serf will attempt to recover failed nodes by reconnecting to them periodically.
+    <img alt="" src="https://raw.githubusercontent.com/sequenceiq/cloudbreak/master/docs/images/serf-gossip.png" /></p>
+</li>
+<li>
+<p>Custom event propagation: Serf can broadcast custom events and queries to the cluster. These can be used to trigger deploys, propagate configuration, etc. Events are simple fire-and-forget broadcast, and Serf makes a best effort to deliver messages in the face of offline nodes or network partitions. Queries provide a simple realtime request/response mechanism.
+    <img alt="" src="https://raw.githubusercontent.com/sequenceiq/cloudbreak/master/docs/images/serf-event.png" /></p>
+</li>
+</ul>
 <h2 id="building-blocks">Building blocks</h2>
 <h3 id="clusters">Clusters</h3>
 <p>A Hadoop cluster is a set of components and services launched in order to store, analyze and process unstructured data. Periscope can work with any Hadoop 2/ YARN cluster provisioned with Apache Ambari, and supports any YARN application.
