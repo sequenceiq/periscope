@@ -261,6 +261,13 @@ periscope.smtp.password - SMTP password
 periscope.smtp.from - SMTP from address, e.g. no-reply@somedomain.com
 </code></pre>
 
+<p>Monitoring requests and actions are async which means they run in a different thread under a thread pool. You can configure
+this pool, or you can leave the default values. These properties are optional.</p>
+<pre class="prettyprint well"><code>periscope.threadpool.core.size - default: 10 - Base pool size
+periscope.threadpool.max.size - default: 100 - Maximum number of parallel requests
+periscope.threadpool.queue.size - default: 10 - Requests queue size
+</code></pre>
+
 <p>Periscope is a <a href="http://projects.spring.io/spring-boot/">Spring Boot</a> based application. In order to start please run the following.</p>
 <pre class="prettyprint well"><code>java -jar periscope.jar
 </code></pre>
@@ -305,7 +312,7 @@ The Periscope projects are open source and developed/distributed under the <a hr
 If you wish to contribute to Periscope (which you're very welcome and encouraged to do so) then you must agree to release the rights of your source under this license.</p>
 <h4 id="creating-issues">Creating issues</h4>
 <p>Any significant improvement should be documented as a GitHub issue before starting to work on it. Please use the appropriate labels - bug, enhancement, etc - this helps while creating the release notes for a version release.
-Before submitting issues please check for duplicate or similar issues. If you are unclear about an issue please feel free to <a href="https://groups.google.com/forum/#!forum/periscope">contact us</a>.</p>
+Before submitting issues please check for duplicate or similar issues. If you are unclear about an issue please feel free to <a href="https://groups.google.com/forum/#!forum/sequenceiq-periscope">contact us</a>.</p>
 <h4 id="discuss-your-design">Discuss your design</h4>
 <p>We recommend discussing your plans on the <a href="https://groups.google.com/forum/#!forum/periscope">mailing list</a> before starting to code - especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give feedback on your design, and maybe point out if someone else is working on the same thing.</p>
 <h4 id="conventions">Conventions</h4>
