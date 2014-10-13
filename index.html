@@ -82,6 +82,10 @@
         
             <li><a href="#quickstart-and-installation">QuickStart and installation</a></li>
         
+            <li><a href="#monitoring">Monitoring</a></li>
+        
+            <li><a href="#hadoop-metrics">Hadoop metrics</a></li>
+        
             <li><a href="#releases-future-plans">Releases, future plans</a></li>
         
             <li><a href="#contribution">Contribution</a></li>
@@ -274,6 +278,55 @@ periscope.threadpool.queue.size - default: 10 - Requests queue size
 <pre class="prettyprint well"><code>java -jar periscope.jar
 </code></pre>
 
+<h2 id="monitoring">Monitoring</h2>
+<p>Part of Periscope we have a Hadoop cluster monitoring solution called <a href="http://blog.sequenceiq.com/blog/2014/10/07/hadoop-monitoring/">Baywatch</a>.</p>
+<p>Although various solutions have been created in the software industry for monitoring of activities taking place in a cluster, but it turned out that only a very few of them satisfies most of our needs. When we made the decision about which monitoring libraries and components to integrate in our stack we kept in mind that it needs to be:</p>
+<ul>
+<li>
+<p><strong>scalable</strong> to be able to efficiently monitor small Hadoop clusters which are consisting of only a few nodes and also clusters which containing thousands of nodes</p>
+</li>
+<li>
+<p><strong>flexible</strong> to be able to provide overview about the health of the whole cluster or about the health of individual nodes or even dive deeper into the internals of Hadoop, e.g. shall be able to visualize how our autoscaling solution for Hadoop YARN called  <a href="http://blog.sequenceiq.com/blog/2014/08/27/announcing-periscope">Periscope</a> moves running applications between <a href="http://blog.sequenceiq.com/blog/2014/07/02/move-applications-between-queues">queues</a></p>
+</li>
+<li>
+<p><strong>extensible</strong> to be able to use the gathered and stored data by extensions written by 3rd parties, e.g. a module which processes the stored (metrics) data and does real-time anomaly detection</p>
+</li>
+<li>
+<p><strong>zero-configuration</strong> to be able to plug into any existing Hadoop cluster without additional configuration, component installation</p>
+</li>
+</ul>
+<p>Based on the requirements above our choice were the followings:</p>
+<ul>
+<li><a href="http://logstash.net">Logstash</a> for log/metrics enrichment, parsing and transformation</li>
+<li><a href="http://www.elasticsearch.org">Elasticsearch</a> for data storage, indexing</li>
+<li><a href="http://www.elasticsearch.org/overview/kibana">Kibana</a> for data visualization</li>
+</ul>
+<h3 id="high-level-architecture">High Level Architecture</h3>
+<p>In our monitoring solution one of the design goal was to provide a <strong>generic, pluggable and isolated monitoring component</strong> to existing Hadoop deployments. We also wanted to make it non-invasive and avoid adding any monitoring related dependency to our Ambari, Hadoop or other Docker images. For that reason we have packaged the monitoring client component into its own Docker image which can be launched alongside with a Hadoop running in another container or even alongside a Hadoop which is not even containerized.</p>
+<p>-&gt; {% img https://raw.githubusercontent.com/sequenceiq/sequenceiq-samples/master/hadoop-monitoring/hadoop-monitoring-arch.png %} &lt;-</p>
+<p>In a nutshell the monitoring solution consist of client and server containers. The <code>server</code> contains the Elasticsearch and the Kibana module. The server container is horizontally scalable and it can be clustered trough the clustering capabilities of Elasticsearch.</p>
+<p>The <code>client</code> container - which is deployed on the machine what is needed to be monitored - contains the Logstash and the collectd module. The Logstash connects to Elasticsearch cluster as client and stores the processed and transformed metrics data there.</p>
+<h2 id="hadoop-metrics">Hadoop metrics</h2>
+<p>The metrics data what we are collecting and visualizing are provided by <a href="http://blog.cloudera.com/blog/2012/10/what-is-hadoop-metrics2">Hadoop metrics</a>, which is a collection of runtime information that are exposed by all Hadoop daemons. We have configured the Metrics subsystem in that way that it writes the valuable metrics information into the filesystem.</p>
+<p>In order to be able to access the metrics data from the monitoring client component - which is running inside a different Docker container - we used the capability of <a href="https://docs.docker.com/userguide/dockervolumes">Docker Volumes</a> which basically let's you access a directory within one container form other container or even access directories from host systems.</p>
+<p>For example if you would like mount the <code>/var/log</code> from the container named <code>ambari-singlenode</code> under the <code>/amb/log</code> in the monitoring client container then the following sequence of commands needs to be executed:</p>
+<p>{% raw %}</p>
+<pre class="prettyprint well"><code class="bash">EXPOSED_LOG_DIR=$(docker inspect --format='{{index .Volumes &quot;/var/log&quot;}}' ambari-singlenode)
+docker run -i -t -v $EXPOSED_LOG_DIR:/amb/log  sequenceiq/baywatch-client /etc/bootstrap.sh -bash
+</code></pre>
+
+<p>{% endraw %}</p>
+<p>Hundreds of different metrics are gathered form Hadoop metrics subsystem and all data is transformed by Logstash to JSON and stored in ElasticSearch to make it ready for querying or displaying it with Kibana.</p>
+<p>The screenshot below has been created from one of our sample dashboard which is displaying Hadoop metrics for a small cluster which was started on my notebook. In this cluster the Yarn's Capacity Scheduler is used and for demonstration purposes I have created a queue called <code>highprio</code> alongside the <code>default</code> queue. I have reduced the capacity of the <code>default</code> queue to 30 and defined the <code>highprio</code> queue with a capacity of 70.
+The red line in the screenshot belongs to the <code>highprio</code> queue, the yellow line belongs to the <code>default</code> queue and the green line is the <code>root</code> queue which is the common ancestor both of them.
+In the benchmark, the jobs were submitted to the <code>default</code> queue and a bit later (somewhere around 17:48) the same jobs were submitted to the <code>highprio</code> queue. As it is clearly observable for <code>highprio</code> queue the allocated Containers, Memory and VCores were higher and jobs were finished much more faster than those that were submitted to the default queue.</p>
+<p>Such kind of dashboard is extremely useful when we are visualizing decisions made by <a href="http://blog.sequenceiq.com/blog/2014/08/27/announcing-periscope">Periscope</a> and check e.g. how the applications are moved across <a href="http://blog.sequenceiq.com/blog/2014/07/02/move-applications-between-queues">queues</a>, or additional nodes are added or removed dynamically from the cluster.</p>
+<p>-&gt; {% img https://raw.githubusercontent.com/sequenceiq/sequenceiq-samples/master/hadoop-monitoring/hadoop_metrics.png %} &lt;-</p>
+<p>To see it in large, please <a href="https://raw.githubusercontent.com/sequenceiq/sequenceiq-samples/master/hadoop-monitoring/hadoop_metrics.png">click here</a>.</p>
+<p>Since all of the Hadoop metrics are stored in the Elasticsearch, therefore there are a lot of possibilities to create different dashboards using that particular parameter of the cluster which is interesting for the operator. The dashboards can be configured on the fly and the metrics are displayed in real-time.</p>
+<h3 id="system-resources">System resources</h3>
+<p>Beside Hadoop metrics, "traditional" system resource data (cpu, memory, io, network) are gathered with the aid of <a href="https://collectd.org">collectd</a>. This can also run inside the monitoring client container since due to the <a href="https://goldmann.pl/blog/2014/09/11/resource-management-in-docker/#_example_managing_the_cpu_shares_of_a_container">resource management</a> in Docker the containers can access and gather information about the whole system and a container can even "steal" the network of other container if you start with: <code>--net=container:id-of-other-container</code> which is very useful if cases when network traffic is monitored.</p>
+<p>-&gt; {% img https://raw.githubusercontent.com/sequenceiq/sequenceiq-samples/master/hadoop-monitoring/system_resource_metrics.png %} &lt;-</p>
 <h2 id="releases-future-plans">Releases, future plans</h2>
 <p>Quite a while ago we have been thinking about <code>autoscaling</code> Hadoop clusters. First of all - being a cost aware young startup - we always had to manually manage our cloud based VM instances, doing what exactly Periscope does. Having short and long running Hadoop jobs on different clusters, and maintaining in parallel different clusters it was a very error prone and tedious job. While Amazon for instance gives a quite good API (remember we always use a CLI as an alternative for UI) but this still wasn’t easy when you have 10+ clusters of different sizes. On the other hand we have started to use different cloud providers as well - Microsoft’s Azure and Google’s Cloud Compute.
 This diversity started to eat into too much DevOps time - and we decided to automate everything and create Periscope.</p>
