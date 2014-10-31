@@ -21,9 +21,7 @@ import com.sequenceiq.periscope.registry.ClusterRegistry;
 import com.sequenceiq.periscope.registry.ClusterState;
 import com.sequenceiq.periscope.registry.ConnectionException;
 import com.sequenceiq.periscope.registry.QueueSetupException;
-import com.sequenceiq.periscope.repository.AlarmRepository;
 import com.sequenceiq.periscope.repository.ClusterRepository;
-import com.sequenceiq.periscope.repository.ScalingPolicyRepository;
 import com.sequenceiq.periscope.utils.ClusterUtils;
 
 @Service
@@ -38,10 +36,6 @@ public class ClusterService {
     private ClusterRegistry clusterRegistry;
     @Autowired
     private ClusterRepository clusterRepository;
-    @Autowired
-    private ScalingPolicyRepository policyRepository;
-    @Autowired
-    private AlarmRepository alarmRepository;
 
     public Cluster add(Ambari ambari) throws ConnectionException {
         Cluster cluster = new Cluster(ambari);
@@ -66,7 +60,7 @@ public class ClusterService {
         if (cluster == null) {
             throw new ClusterNotFoundException(clusterId);
         }
-        cluster.setAlarms(null);
+        cluster.deleteAlarms();
         clusterRepository.delete(cluster);
         return cluster;
     }

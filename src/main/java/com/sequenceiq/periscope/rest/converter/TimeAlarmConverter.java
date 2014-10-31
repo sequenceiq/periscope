@@ -6,27 +6,36 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.sequenceiq.periscope.domain.Alarm;
 import com.sequenceiq.periscope.domain.Notification;
 import com.sequenceiq.periscope.domain.ScalingPolicy;
-import com.sequenceiq.periscope.rest.json.AlarmJson;
+import com.sequenceiq.periscope.domain.TimeAlarm;
+import com.sequenceiq.periscope.repository.ScalingPolicyRepository;
 import com.sequenceiq.periscope.rest.json.NotificationJson;
+import com.sequenceiq.periscope.rest.json.TimeAlarmJson;
 
 @Component
-public class AlarmConverter extends AbstractConverter<AlarmJson, Alarm> {
+public class TimeAlarmConverter extends AbstractConverter<TimeAlarmJson, TimeAlarm> {
 
     @Autowired
     private NotificationConverter notificationConverter;
+    @Autowired
+    private ScalingPolicyRepository policyRepository;
 
     @Override
-    public Alarm convert(AlarmJson source) {
-        Alarm alarm = new Alarm();
+    public TimeAlarm convert(TimeAlarmJson source) {
+        TimeAlarm alarm = new TimeAlarm();
         alarm.setName(source.getAlarmName());
-        alarm.setComparisonOperator(source.getComparisonOperator());
         alarm.setDescription(source.getDescription());
-        alarm.setMetric(source.getMetric());
-        alarm.setPeriod(source.getPeriod());
-        alarm.setThreshold(source.getThreshold());
+        alarm.setCron(source.getCron());
+        alarm.setTimeZone(source.getTimeZone());
+        Long policyId = source.getScalingPolicyId();
+        if (policyId != null) {
+            ScalingPolicy policy = policyRepository.findOne(policyId);
+            if (policy != null) {
+                alarm.setScalingPolicy(policy);
+                policy.setAlarm(alarm);
+            }
+        }
         List<NotificationJson> notifications = source.getNotifications();
         if (notifications != null && !notifications.isEmpty()) {
             alarm.setNotifications(notificationConverter.convertAllFromJson(notifications));
@@ -35,17 +44,15 @@ public class AlarmConverter extends AbstractConverter<AlarmJson, Alarm> {
     }
 
     @Override
-    public AlarmJson convert(Alarm source) {
-        AlarmJson json = new AlarmJson();
+    public TimeAlarmJson convert(TimeAlarm source) {
+        TimeAlarmJson json = new TimeAlarmJson();
         json.setId(source.getId());
         ScalingPolicy scalingPolicy = source.getScalingPolicy();
         json.setScalingPolicyId(scalingPolicy == null ? null : scalingPolicy.getId());
         json.setAlarmName(source.getName());
-        json.setComparisonOperator(source.getComparisonOperator());
+        json.setCron(source.getCron());
+        json.setTimeZone(source.getTimeZone());
         json.setDescription(source.getDescription());
-        json.setMetric(source.getMetric());
-        json.setPeriod(source.getPeriod());
-        json.setThreshold(source.getThreshold());
         List<Notification> notifications = source.getNotifications();
         notifications = notifications == null ? Collections.<Notification>emptyList() : notifications;
         json.setNotifications(notificationConverter.convertAllToJson(notifications));
