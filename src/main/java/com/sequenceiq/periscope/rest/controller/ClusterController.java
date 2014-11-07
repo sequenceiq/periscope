@@ -5,27 +5,35 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sequenceiq.periscope.domain.Ambari;
 import com.sequenceiq.periscope.domain.Cluster;
+import com.sequenceiq.periscope.domain.PeriscopeUser;
+import com.sequenceiq.periscope.log.Logger;
+import com.sequenceiq.periscope.log.PeriscopeLoggerFactory;
 import com.sequenceiq.periscope.registry.ConnectionException;
 import com.sequenceiq.periscope.rest.converter.AmbariConverter;
 import com.sequenceiq.periscope.rest.converter.ClusterConverter;
 import com.sequenceiq.periscope.rest.json.AmbariJson;
-import com.sequenceiq.periscope.rest.json.AppMovementJson;
 import com.sequenceiq.periscope.rest.json.ClusterJson;
 import com.sequenceiq.periscope.rest.json.StateJson;
 import com.sequenceiq.periscope.service.AppService;
 import com.sequenceiq.periscope.service.ClusterNotFoundException;
 import com.sequenceiq.periscope.service.ClusterService;
+import com.sequenceiq.periscope.service.security.ClusterSecurityService;
 
 @RestController
 @RequestMapping("/clusters")
 public class ClusterController {
+
+    private static final Logger LOGGER = PeriscopeLoggerFactory.getLogger(ClusterController.class);
 
     @Autowired
     private ClusterService clusterService;
@@ -35,38 +43,44 @@ public class ClusterController {
     private ClusterConverter clusterConverter;
     @Autowired
     private AppService appService;
+    @Autowired
+    private ClusterSecurityService clusterSecurityService;
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<ClusterJson> addCluster(@RequestBody AmbariJson ambariServer) throws ConnectionException {
-        return createClusterJsonResponse(clusterService.add(ambariConverter.convert(ambariServer)), HttpStatus.CREATED);
-    }
-
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<ClusterJson> getCluster(@PathVariable long id) throws ClusterNotFoundException {
-        return createClusterJsonResponse(clusterService.get(id));
+    public ResponseEntity<ClusterJson> addCluster(@ModelAttribute("user") PeriscopeUser user,
+            @RequestBody AmbariJson ambariServer) throws ConnectionException {
+        Ambari ambari = ambariConverter.convert(ambariServer);
+        boolean access = clusterSecurityService.hasAccess(user, ambari);
+        if (!access) {
+            String host = ambari.getHost();
+            LOGGER.info(-1, "Illegal access to Ambari cluster '{}' from user '{}'", host, user.getEmail());
+            throw new AccessDeniedException(String.format("Accessing Ambari cluster '%s' is not allowed", host));
+        }
+        return createClusterJsonResponse(clusterService.add(user, ambari), HttpStatus.CREATED);
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<ClusterJson>> getClusters() {
-        List<Cluster> clusters = clusterService.getAll();
+    public ResponseEntity<List<ClusterJson>> getClusters(@ModelAttribute("user") PeriscopeUser user) {
+        List<Cluster> clusters = clusterService.getAll(user);
         return new ResponseEntity<>(clusterConverter.convertAllToJson(clusters), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<ClusterJson> deleteCluster(@PathVariable long id) throws ClusterNotFoundException {
-        return createClusterJsonResponse(clusterService.remove(id));
+    @RequestMapping(value = "/{clusterId}", method = RequestMethod.GET)
+    public ResponseEntity<ClusterJson> getCluster(@ModelAttribute("user") PeriscopeUser user,
+            @PathVariable long clusterId) throws ClusterNotFoundException {
+        return createClusterJsonResponse(clusterService.get(user, clusterId));
     }
 
-    @RequestMapping(value = "/{id}/state", method = RequestMethod.POST)
-    public ResponseEntity<ClusterJson> setState(@PathVariable long id, @RequestBody StateJson stateJson)
-            throws ClusterNotFoundException {
-        return createClusterJsonResponse(clusterService.setState(id, stateJson.getState()));
+    @RequestMapping(value = "/{clusterId}", method = RequestMethod.DELETE)
+    public ResponseEntity<ClusterJson> deleteCluster(@ModelAttribute("user") PeriscopeUser user,
+            @PathVariable long clusterId) throws ClusterNotFoundException {
+        return createClusterJsonResponse(clusterService.remove(user, clusterId));
     }
 
-    @RequestMapping(value = "/{id}/movement", method = RequestMethod.POST)
-    public ResponseEntity<ClusterJson> enableMovement(@PathVariable long id, @RequestBody AppMovementJson appMovementJson)
-            throws ClusterNotFoundException {
-        return createClusterJsonResponse(appService.allowAppMovement(id, appMovementJson.isAllowed()));
+    @RequestMapping(value = "/{clusterId}/state", method = RequestMethod.POST)
+    public ResponseEntity<ClusterJson> setState(@ModelAttribute("user") PeriscopeUser user,
+            @PathVariable long clusterId, @RequestBody StateJson stateJson) throws ClusterNotFoundException {
+        return createClusterJsonResponse(clusterService.setState(user, clusterId, stateJson.getState()));
     }
 
     private ResponseEntity<ClusterJson> createClusterJsonResponse(Cluster cluster) {
