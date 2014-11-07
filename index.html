@@ -242,7 +242,7 @@ Also we facilitate changing the resources allocated to a running application - e
 <h2 id="quickstart-and-installation">QuickStart and installation</h2>
 <p>Periscope requires an Apache Ambari endpoint of your Hadoop cluster to start to apply your SLA policies. We suggest to start with <a href="http://sequenceiq.com/cloudbreak/#quickstart-and-installation">Cloudbreak</a>. Create a hosted free <a href="https://cloudbreak.sequenceiq.com/">Cloudbreak</a> account and start experimenting.</p>
 <h3 id="build-and-run">Build and run</h3>
-<p>The Periscope code is available at our <a href="https://github.com/sequenceiq/periscope.git">GitHub repository</a>. </p>
+<p>The Periscope code is available at our <a href="https://github.com/sequenceiq/periscope.git">GitHub repository</a>.</p>
 <pre class="prettyprint well"><code>git clone https://github.com/sequenceiq/periscope.git
 cd periscope
 </code></pre>
@@ -252,17 +252,21 @@ cd periscope
 </code></pre>
 
 <p>You are almost done. In order to start using Periscope you will need to set or pass the following environment variables.</p>
-<pre class="prettyprint well"><code>periscope.cloudbreak.host - Cloudbreak host 
-periscope.cloudbreak.port - Cloudbreak port
-periscope.cloudbreak.user - Cloudbreak user name
-periscope.cloudbreak.pass - Cloudbreak password
-periscope.identity.host - Oauth identity server host
-periscope.identity.port - Oauth identity server port
+<pre class="prettyprint well"><code>periscope.cloudbreak.url - URL of Cloudbreak, e.g: http://cloudbreak.sequenceiq.com:80
+periscope.db.port.5432.tcp.addr - Address of the Database, e.g: 172.17.0.2
+periscope.db.port.5432.tcp.port - Port of the Database, e.g: 5432
+periscope.db.env.user - Username to the Database, default: postgres
+periscope.db.env.pass - Password to the Database, default: &lt;no_password&gt;
+periscope.db.env.db - Name of the Database, default: postgres
+periscope.hbm2ddl.strategy - Strategy whether to create or update the DB scheme on start, default: update
 periscope.smtp.host - SMTP host for sending emails
-periscope.smtp.port - SMTP port 
-periscope.smtp.username - SMTP username 
-periscope.smtp.password - SMTP password 
+periscope.smtp.port - SMTP port
+periscope.smtp.username - SMTP username
+periscope.smtp.password - SMTP password
 periscope.smtp.from - SMTP from address, e.g. no-reply@somedomain.com
+periscope.identity.server.url - URL of the UAA identity server, e.g: http://uaa.sequenceiq.com:80
+periscope.client.id - ID of the registered application in UAA
+periscope.client.secret - Secret key of the registered application in UAA
 </code></pre>
 
 <p>Monitoring requests and actions are async which means they run in a different thread under a thread pool. You can configure
@@ -301,7 +305,7 @@ periscope.threadpool.queue.size - default: 10 - Requests queue size
 </ul>
 <h3 id="high-level-architecture">High Level Architecture</h3>
 <p>In our monitoring solution one of the design goal was to provide a <strong>generic, pluggable and isolated monitoring component</strong> to existing Hadoop deployments. We also wanted to make it non-invasive and avoid adding any monitoring related dependency to our Ambari, Hadoop or other Docker images. For that reason we have packaged the monitoring client component into its own Docker image which can be launched alongside with a Hadoop running in another container or even alongside a Hadoop which is not even containerized.</p>
-<p><img alt="" src="https://raw.githubusercontent.com/sequenceiq/sequenceiq-samples/master/hadoop-monitoring/hadoop-monitoring-arch.png" /> </p>
+<p><img alt="" src="https://raw.githubusercontent.com/sequenceiq/sequenceiq-samples/master/hadoop-monitoring/hadoop-monitoring-arch.png" /></p>
 <p>In a nutshell the monitoring solution consist of client and server containers. The <code>server</code> contains the Elasticsearch and the Kibana module. The server container is horizontally scalable and it can be clustered trough the clustering capabilities of Elasticsearch.</p>
 <p>The <code>client</code> container - which is deployed on the machine what is needed to be monitored - contains the Logstash and the collectd module. The Logstash connects to Elasticsearch cluster as client and stores the processed and transformed metrics data there.</p>
 <h3 id="hadoop-metrics">Hadoop metrics</h3>
