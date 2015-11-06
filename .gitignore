@@ -13,3 +13,4 @@ gradle
 *.jks
 atlassian*
 userdatas/
+certs/
